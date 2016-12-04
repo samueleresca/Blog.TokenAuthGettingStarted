@@ -65,6 +65,8 @@ namespace Blog.TokenAuthGettingStarted
                     SecurityAlgorithms.HmacSha256,
                     tokenValidationParameters)
             });
+
+        
         }
 
         private Task<ClaimsIdentity> GetIdentity(string username, string password)
