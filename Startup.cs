@@ -1,5 +1,3 @@
-using System;
-using System.Text;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -9,7 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Blog.TokenAuthGettingStarted
 {
-    public class Startup
+    public partial class Startup
     {
         public SymmetricSecurityKey signingKey;
 
@@ -37,34 +35,10 @@ namespace Blog.TokenAuthGettingStarted
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
 
-            var tokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = signingKey,
-
-                // Check the issuer
-                ValidateIssuer = true,
-                ValidIssuer = Configuration.GetSection("TokenAuthentication:Issuer").Value,
-                // Check the Audit
-                ValidateAudience = true,
-                ValidAudience = Configuration.GetSection("TokenAuthentication:Audience").Value,
-
-                ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
-            };
-
-
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
 
-            signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration.GetSection("TokenAuthentication:SecretKey").Value));
-
-            app.UseJwtBearerAuthentication(new JwtBearerOptions
-            {
-                AutomaticAuthenticate = true,
-                AutomaticChallenge = true,
-                TokenValidationParameters = tokenValidationParameters
-            });
+            ConfigureAuth(app);
 
             app.UseMvc();
         }
