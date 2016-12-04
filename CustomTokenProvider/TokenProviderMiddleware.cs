@@ -8,17 +8,26 @@ using Newtonsoft.Json;
 
 namespace CustomTokenAuthProvider
 {
+
     public class TokenProviderMiddleware
     {
         private readonly RequestDelegate _next;
         private readonly TokenProviderOptions _options;
+        private readonly JsonSerializerSettings _serializerSettings;
 
         public TokenProviderMiddleware(
             RequestDelegate next,
             IOptions<TokenProviderOptions> options)
         {
             _next = next;
+
             _options = options.Value;
+            ThrowIfInvalidOptions(_options);
+
+            _serializerSettings = new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented
+            };
         }
 
         public Task Invoke(HttpContext context)
@@ -37,18 +46,16 @@ namespace CustomTokenAuthProvider
                 return context.Response.WriteAsync("Bad request.");
             }
 
+
             return GenerateToken(context);
         }
-
-
-        #region Private Members
 
         private async Task GenerateToken(HttpContext context)
         {
             var username = context.Request.Form["username"];
             var password = context.Request.Form["password"];
 
-            var identity = await GetIdentity(username, password);
+            var identity = await _options.IdentityResolver(username, password);
             if (identity == null)
             {
                 context.Response.StatusCode = 400;
@@ -58,14 +65,13 @@ namespace CustomTokenAuthProvider
 
             var now = DateTime.UtcNow;
 
-            // Specifically add the jti (random nonce), iat (issued timestamp), and sub (subject/user) claims.
+            // Specifically add the jti (nonce), iat (issued timestamp), and sub (subject/user) claims.
             // You can add other claims here, if you want:
             var claims = new Claim[]
             {
-
-        new Claim(JwtRegisteredClaimNames.Sub, username),
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-        new Claim(JwtRegisteredClaimNames.Iat, new DateTimeOffset(now).ToUniversalTime().ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
+                new Claim(JwtRegisteredClaimNames.Sub, username),
+                new Claim(JwtRegisteredClaimNames.Jti, await _options.NonceGenerator()),
+                new Claim(JwtRegisteredClaimNames.Iat, new DateTimeOffset(now).ToUniversalTime().ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
             };
 
             // Create the JWT and write it to a string
@@ -86,22 +92,46 @@ namespace CustomTokenAuthProvider
 
             // Serialize and return the response
             context.Response.ContentType = "application/json";
-            await context.Response.WriteAsync(JsonConvert.SerializeObject(response, new JsonSerializerSettings { Formatting = Formatting.Indented }));
+            await context.Response.WriteAsync(JsonConvert.SerializeObject(response, _serializerSettings));
         }
 
-
-        private Task<ClaimsIdentity> GetIdentity(string username, string password)
+        private static void ThrowIfInvalidOptions(TokenProviderOptions options)
         {
-            // DON'T do this in production, obviously!
-            if (username == "TEST" && password == "TEST123")
+            if (string.IsNullOrEmpty(options.Path))
             {
-                return Task.FromResult(new ClaimsIdentity(new System.Security.Principal.GenericIdentity(username, "Token"), new Claim[] { }));
+                throw new ArgumentNullException(nameof(TokenProviderOptions.Path));
             }
 
-            // Credentials are invalid, or account doesn't exist
-            return Task.FromResult<ClaimsIdentity>(null);
+            if (string.IsNullOrEmpty(options.Issuer))
+            {
+                throw new ArgumentNullException(nameof(TokenProviderOptions.Issuer));
+            }
+
+            if (string.IsNullOrEmpty(options.Audience))
+            {
+                throw new ArgumentNullException(nameof(TokenProviderOptions.Audience));
+            }
+
+            if (options.Expiration == TimeSpan.Zero)
+            {
+                throw new ArgumentException("Must be a non-zero TimeSpan.", nameof(TokenProviderOptions.Expiration));
+            }
+
+            if (options.IdentityResolver == null)
+            {
+                throw new ArgumentNullException(nameof(TokenProviderOptions.IdentityResolver));
+            }
+
+            if (options.SigningCredentials == null)
+            {
+                throw new ArgumentNullException(nameof(TokenProviderOptions.SigningCredentials));
+            }
+
+            if (options.NonceGenerator == null)
+            {
+                throw new ArgumentNullException(nameof(TokenProviderOptions.NonceGenerator));
+            }
         }
 
-        #endregion
     }
 }
