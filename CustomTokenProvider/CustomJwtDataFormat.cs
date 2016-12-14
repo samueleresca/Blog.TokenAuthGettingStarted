@@ -43,8 +43,6 @@ namespace CustomTokenAuthProvider
                 {
                     throw new ArgumentException($"Algorithm must be '{algorithm}'");
                 }
-
-                // Additional custom validation of JWT claims here (if any)
             }
             catch (SecurityTokenValidationException)
             {
@@ -55,11 +53,10 @@ namespace CustomTokenAuthProvider
                 return null;
             }
 
-            // Validation passed. Return a valid AuthenticationTicket:
+            // VALIDATION PASSED
             return new AuthenticationTicket(principal, new AuthenticationProperties(), "Cookie");
         }
-
-        // This ISecureDataFormat implementation is decode-only
+        
         public string Protect(AuthenticationTicket data)
         {
             throw new NotImplementedException();

@@ -18,14 +18,6 @@ namespace Blog.TokenAuthGettingStarted
 
             var signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration.GetSection("TokenAuthentication:SecretKey").Value));
 
-            var tokenProviderOptions = new TokenProviderOptions
-            {
-                Path = Configuration.GetSection("TokenAuthentication:TokenPath").Value,
-                Audience = Configuration.GetSection("TokenAuthentication:Audience").Value,
-                Issuer = Configuration.GetSection("TokenAuthentication:Issuer").Value,
-                SigningCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256),
-                IdentityResolver = GetIdentity
-            };
 
             var tokenValidationParameters = new TokenValidationParameters
             {
@@ -43,10 +35,6 @@ namespace Blog.TokenAuthGettingStarted
                 // If you want to allow a certain amount of clock drift, set that here:
                 ClockSkew = TimeSpan.Zero
             };
-
-
-            app.UseMiddleware<TokenProviderMiddleware>(Options.Create(tokenProviderOptions));
-
 
             app.UseJwtBearerAuthentication(new JwtBearerOptions
             {
@@ -66,6 +54,17 @@ namespace Blog.TokenAuthGettingStarted
                     tokenValidationParameters)
             });
 
+           var tokenProviderOptions = new TokenProviderOptions
+            {
+                Path = Configuration.GetSection("TokenAuthentication:TokenPath").Value,
+                Audience = Configuration.GetSection("TokenAuthentication:Audience").Value,
+                Issuer = Configuration.GetSection("TokenAuthentication:Issuer").Value,
+                SigningCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256),
+                IdentityResolver = GetIdentity
+            };
+
+            app.UseMiddleware<TokenProviderMiddleware>(Options.Create(tokenProviderOptions));
+
         
         }
 
@@ -80,6 +79,6 @@ namespace Blog.TokenAuthGettingStarted
             // Credentials are invalid, or account doesn't exist
             return Task.FromResult<ClaimsIdentity>(null);
         }
-
+            
     }
 }

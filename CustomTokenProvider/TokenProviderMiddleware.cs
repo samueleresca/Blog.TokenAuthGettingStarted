@@ -32,13 +32,13 @@ namespace CustomTokenAuthProvider
 
         public Task Invoke(HttpContext context)
         {
-            // If the request path doesn't match, skip
+          
             if (!context.Request.Path.Equals(_options.Path, StringComparison.Ordinal))
             {
                 return _next(context);
             }
 
-            // Request must be POST with Content-Type: application/x-www-form-urlencoded
+           
             if (!context.Request.Method.Equals("POST")
                || !context.Request.HasFormContentType)
             {
@@ -65,8 +65,7 @@ namespace CustomTokenAuthProvider
 
             var now = DateTime.UtcNow;
 
-            // Specifically add the jti (nonce), iat (issued timestamp), and sub (subject/user) claims.
-            // You can add other claims here, if you want:
+          
             var claims = new Claim[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, username),

@@ -6,7 +6,8 @@ using Microsoft.IdentityModel.Tokens;
 namespace CustomTokenAuthProvider
 {
     public class TokenProviderOptions
-    { /// <summary>
+    { 
+        /// <summary>
         /// The relative request path to listen on.
         /// </summary>
         /// <remarks>The default path is <c>/token</c>.</remarks>
@@ -37,13 +38,5 @@ namespace CustomTokenAuthProvider
         /// Resolves a user identity given a username and password.
         /// </summary>
         public Func<string, string, Task<ClaimsIdentity>> IdentityResolver { get; set; }
-
-        /// <summary>
-        /// Generates a random value (nonce) for each generated token.
-        /// </summary>
-        /// <remarks>The default nonce is a random GUID.</remarks>
-        public Func<Task<string>> NonceGenerator { get; set; }
-            = new Func<Task<string>>(() => Task.FromResult(Guid.NewGuid().ToString()));
-        
     }
 }
