@@ -38,5 +38,12 @@ namespace CustomTokenAuthProvider
         /// Resolves a user identity given a username and password.
         /// </summary>
         public Func<string, string, Task<ClaimsIdentity>> IdentityResolver { get; set; }
+
+        /// <summary>
+        /// Generates a random value (nonce) for each generated token.
+        /// </summary>
+        /// <remarks>The default nonce is a random GUID.</remarks>
+        public Func<Task<string>> NonceGenerator { get; set; }
+            = () => Task.FromResult(Guid.NewGuid().ToString());
     }
 }

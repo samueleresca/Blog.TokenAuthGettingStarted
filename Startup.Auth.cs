@@ -43,6 +43,8 @@ namespace Blog.TokenAuthGettingStarted
                 TokenValidationParameters = tokenValidationParameters
             });
 
+   
+
             app.UseCookieAuthentication(new CookieAuthenticationOptions
             {
                 AutomaticAuthenticate = true,
