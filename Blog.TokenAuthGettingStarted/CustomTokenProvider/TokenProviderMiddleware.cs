@@ -6,9 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
-namespace CustomTokenAuthProvider
+namespace Blog.TokenAuthGettingStarted.CustomTokenProvider
 {
-
     public class TokenProviderMiddleware
     {
         private readonly RequestDelegate _next;
@@ -32,22 +31,16 @@ namespace CustomTokenAuthProvider
 
         public Task Invoke(HttpContext context)
         {
-          
             if (!context.Request.Path.Equals(_options.Path, StringComparison.Ordinal))
             {
                 return _next(context);
             }
 
-           
-            if (!context.Request.Method.Equals("POST")
-               || !context.Request.HasFormContentType)
-            {
-                context.Response.StatusCode = 400;
-                return context.Response.WriteAsync("Bad request.");
-            }
 
-
-            return GenerateToken(context);
+            if (context.Request.Method.Equals("POST") && context.Request.HasFormContentType)
+                return GenerateToken(context);
+            context.Response.StatusCode = 400;
+            return context.Response.WriteAsync("Bad request.");
         }
 
         private async Task GenerateToken(HttpContext context)
@@ -65,12 +58,13 @@ namespace CustomTokenAuthProvider
 
             var now = DateTime.UtcNow;
 
-          
+
             var claims = new Claim[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, username),
                 new Claim(JwtRegisteredClaimNames.Jti, await _options.NonceGenerator()),
-                new Claim(JwtRegisteredClaimNames.Iat, new DateTimeOffset(now).ToUniversalTime().ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
+                new Claim(JwtRegisteredClaimNames.Iat,
+                    new DateTimeOffset(now).ToUniversalTime().ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
             };
 
             // Create the JWT and write it to a string
@@ -86,7 +80,7 @@ namespace CustomTokenAuthProvider
             var response = new
             {
                 access_token = encodedJwt,
-                expires_in = (int)_options.Expiration.TotalSeconds
+                expires_in = (int) _options.Expiration.TotalSeconds
             };
 
             // Serialize and return the response
@@ -131,6 +125,5 @@ namespace CustomTokenAuthProvider
                 throw new ArgumentNullException(nameof(TokenProviderOptions.NonceGenerator));
             }
         }
-
     }
 }

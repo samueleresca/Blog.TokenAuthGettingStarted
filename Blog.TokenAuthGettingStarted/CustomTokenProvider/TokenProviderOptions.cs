@@ -3,10 +3,10 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.IdentityModel.Tokens;
 
-namespace CustomTokenAuthProvider
+namespace Blog.TokenAuthGettingStarted.CustomTokenProvider
 {
     public class TokenProviderOptions
-    { 
+    {
         /// <summary>
         /// The relative request path to listen on.
         /// </summary>
